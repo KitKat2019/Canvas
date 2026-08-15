@@ -12,9 +12,10 @@ const { color, log, yellow, red, green, cyan, cyanBright } = require('console-lo
 var app = require('http').createServer(handler);
 var fs = require('fs');
 const { Server } = require("socket.io");
+const port=5000;
 
 const io = new Server(app);
-app.listen(5000, 'localhost', () => {
+app.listen(process.env.PORT || port, () => {
   console.log(yellow.bold('******'),color('HTTP Server running on port:', 'white'),green.underline('5000'),yellow.bold('******'));;
 });
 function handler (req, res) {
