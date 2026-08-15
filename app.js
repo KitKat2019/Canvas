@@ -3,8 +3,8 @@ let http = require('http');
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
   res.end('Hello World!');
-}).listen(8080, 'localhost', () => {
-  console.log('Server running at on 8080');
+}).listen(5000, 'localhost', () => {
+  console.log('Server running at on 5000');
 });
 */
 //let mysql = require('mysql');
@@ -14,8 +14,8 @@ var fs = require('fs');
 const { Server } = require("socket.io");
 
 const io = new Server(app);
-app.listen(8080, 'localhost', () => {
-  console.log(yellow.bold('******'),color('HTTP Server running on port:', 'white'),green.underline('8080'),yellow.bold('******'));;
+app.listen(5000, 'localhost', () => {
+  console.log(yellow.bold('******'),color('HTTP Server running on port:', 'white'),green.underline('5000'),yellow.bold('******'));;
 });
 function handler (req, res) {
 var mylink='/index.html';
