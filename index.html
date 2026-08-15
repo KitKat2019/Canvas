@@ -1,0 +1,238 @@
+<html>
+<head>
+<title>Server</title>
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.14.2/jquery-ui.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.2/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> 
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.css" />
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+  #container{
+    margin-top:80px;
+    position: relative;
+    display: inline-block;
+  }
+  canvas {
+    /*cursor: crosshair;*/
+      /*cursor: url(https://icons.iconarchive.com/icons/designcontest/vintage/32/Patent-Pen-icon.png) 0 30, progress;*/
+cursor: url(https://lovemodz.com/cur.png) 0 43, pointer;
+    border: 1px solid #000000;
+}
+.tools{
+  background: #a1a1a1;
+  position: absolute;
+  left: 100%;
+  top:0;
+  text-align: center;
+  width: 0px;
+  transition: width 400ms ease-in-out, border-radius 300ms ease-in-out 400ms;
+  height: 100%;
+  border-radius: 0px 0px 0px 0px;
+}
+.tools:hover{
+  width: 80px;
+  border-radius: 0px 6px 6px 0px;
+}
+.tools:hover .options{
+margin:3px 5px;
+opacity: 1;
+transition: opacity 200ms ease-in-out 400ms;
+text-align: center;
+padding: 2px;
+}
+.options input{
+margin:0 auto;
+}
+.tools:hover #tab{
+opacity: 0;
+transition: opacity 600ms ease-in-out;
+}
+.tools #tab{
+  background: rgb(0, 8, 252);
+  box-shadow: inset 0px 5px 6px 1px rgb(0, 242, 255), 0px 0px 0px 0px rgb(0, 8, 252);
+  color:white;
+  border:solid 1px rgb(0, 242, 255);
+  border-bottom: 0px;
+  border-radius: 5px 5px 0px 0px;
+  position: absolute;
+  left:calc(100% - 11px);
+  bottom: 0;
+  top: calc(0% + 11px);
+  width:fit-content;
+ transform: rotate(90deg);
+ height:fit-content;
+ padding:2px 4px;
+ opacity: 1;
+}
+.tools .options{
+opacity: 0;
+transition: opacity 200ms ease-in-out 0ms;
+}
+#brushselect{
+  padding:6px;
+  display:inline-block;
+  border-radius: 50%;
+  box-shadow: inset 0px 0px 2px black, 0px 0px 3px 2px white;
+}
+#drawcolor{
+  position: relative;
+  display: block;
+}
+
+#drawcolor:after{
+  content: attr(data-val);
+  position: absolute;
+  font-size:75%;
+  top:25%;
+  bottom:25%;
+  left:0;
+  right:0;
+  text-align: center; 
+}
+</style>
+</head>
+<body>
+<div id="container">
+<canvas id="canvas" width="400" height="200"></canvas>
+<div class="tools">
+<div class="options">
+<input type="color" id="drawcolor" name="drawcolor" data-val="ttt" value="#ff0000">
+</div>
+<div class="options">
+<div id="brushselect"></div>
+</div>
+<div id="tab">Tools</div>
+</div>
+</div>
+<hr/>
+<input type="button" value="draw" onclick="use_tool('draw');" />
+<input type="button" value="erase" onclick="use_tool('erase');" />
+<hr/>
+
+<script>
+const socket = io();
+socket.emit("hello", "Normal");
+socket.on("drawing", function(mousex,mousey,last_mousex,last_mousey,mousedown,usrcol){
+tester(mousex,mousey,last_mousex,last_mousey,mousedown,usrcol);
+//Message('8794', id.substr(0,5), msg)
+});
+const bytes = crypto.getRandomValues(new Uint8Array(3));
+var randcol="#"+crypto.getRandomValues(new Uint8Array(3)).toHex();
+var drawcolor=document.getElementById('drawcolor');
+var brushselect=document.getElementById('brushselect');
+//var drawcol="#"+crypto.getRandomValues(new Uint8Array(3)).toHex();
+drawcolor.addEventListener('input',function(){
+  this.dataset.val=this.value;
+  brushselect.style.background=this.value;
+  randcol=this.value;
+});
+drawcolor.value=randcol;
+brushselect.style.background=randcol;
+drawcolor.dataset.val=randcol;
+//Canvas
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+//Variables
+var canvasx = $(canvas).offset().left;
+var canvasy = $(canvas).offset().top;
+var last_mousex = last_mousey = 0;
+var mousex = mousey = 0;
+var mousedown = false;
+var tooltype = 'draw';
+var drawcol=randcol;
+
+//Mousedown
+$(canvas).on('mousedown', function(e) {
+    last_mousex = mousex = parseInt(e.clientX-canvasx);
+	last_mousey = mousey = parseInt(e.clientY-canvasy);
+    mousedown = true;
+});
+
+//Mouseup
+$(canvas).on('mouseup', function(e) {
+    mousedown = false;
+    drawcol=randcol;
+});
+/*
+'current: '+mousex+', '+mousey+'<br/>last: '+last_mousex+', '+last_mousey+'<br/>mousedown: '+mousedown
+mousex,mousey,last_mousex,last_mousey,mousedown
+*/
+function tester(mousex,mousey,last_mousex,last_mousey,mousedown,usrcol){
+        ctx.beginPath();
+        if(tooltype=='draw') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = usrcol;
+            ctx.lineWidth = 12;
+        } else {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = 10;
+        }
+        ctx.moveTo(last_mousex,last_mousey);
+        ctx.lineTo(mousex,mousey);
+        ctx.lineJoin = ctx.lineCap = 'round';
+        ctx.stroke();
+
+}
+//Mousemove
+$(canvas).on('mousemove', function(e) {
+    mousex = parseInt(e.clientX-canvasx);
+    mousey = parseInt(e.clientY-canvasy);
+    if(mousedown) {
+        ctx.beginPath();
+      //  ctx.beginPath();
+                 //   ctx.globalCompositeOperation = 'source-over';
+         //   ctx.strokeStyle = '#' + bytes.toHex();
+          //  ctx.lineWidth = 30;
+        if(tooltype=='draw') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = randcol;
+            ctx.lineWidth = 12;
+        } else {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = 12;
+        }
+        ctx.moveTo(last_mousex,last_mousey);
+        ctx.lineTo(mousex,mousey);
+        ctx.lineJoin = ctx.lineCap = 'round';
+        ctx.stroke();
+    //tester(mousex,mousey,last_mousex,last_mousey,mousedown);
+    socket.emit("hello", mousex,mousey,last_mousex,last_mousey,mousedown,randcol);
+      }
+    last_mousex = mousex;
+    last_mousey = mousey;
+    //Output
+   // $('#output').html('current: '+mousex+', '+mousey+'<br/>last: '+last_mousex+', '+last_mousey+'<br/>mousedown: '+mousedown);
+    
+});
+
+//Use draw|erase
+use_tool = function(tool) {
+    tooltype = tool; //update
+}
+var str='Canvas Drawing Board';
+var strinx=0;
+function scrolltitle(){
+var newtitle=str;
+strinx++;
+if(strinx==str.length){
+console.log('stop');
+document.title=str;
+strinx=0;
+window.setTimeout(scrolltitle,3000);
+}else{
+  console.log('scroll');
+  document.title=newtitle.slice(strinx);
+  window.setTimeout(scrolltitle,300);
+}
+}
+document.title=str;
+window.setTimeout(scrolltitle,2000);
+</script>
+</body>
+</html>
+
+
+

@@ -1,0 +1,15 @@
+{
+  "name": "Canvas",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "dependencies": {
+    "console-log-colors": "^0.5.0",
+    "fs": "^0.0.1-security",
+    "http": "^0.0.1-security",
+    "mysql": "^2.18.1",
+    "nodemon": "^3.1.14",
+    "socket.io": "^4.8.1"
+  }
+}
